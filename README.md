@@ -29,7 +29,7 @@ class ISystemStateListener {
 Fixed-capacity broadcaster. Stores listener pointers, no dynamic allocation. Starts inactive — notifications are silently dropped until `activate()` is called (so the system can finish initialization first).
 
 ```cpp
-ungula::SystemStateNotifier<4> notifier;
+ungula::eventbus::SystemStateNotifier<4> notifier;
 
 notifier.subscribe(&wsListener);
 notifier.subscribe(&cloudListener);
@@ -42,7 +42,7 @@ notifier.notify();      // broadcast to all listeners
 Abstract base class implementing `ISystemStateListener` using FreeRTOS task notifications. Template Method pattern — the base class owns the task loop, the derived class implements `handleStateChange()`.
 
 ```cpp
-class MyListener : public ungula::ESP32SystemStateListener<5000> {
+class MyListener : public ungula::eventbus::ESP32SystemStateListener<5000> {
   protected:
     void handleStateChange() override {
         // read current state, compare, send if different
@@ -73,11 +73,11 @@ Override task defaults via build flags:
 ## Quick example
 
 ```cpp
-#include <brokers/system_state_notifier.h>
-#include <brokers/esp32_system_state_listener.h>
+#include <ungula/eventbus/system_state_notifier.h>
+#include <ungula/eventbus/esp32_system_state_listener.h>
 
 // Project-specific listener
-class StatusPusher : public ungula::ESP32SystemStateListener<5000> {
+class StatusPusher : public ungula::eventbus::ESP32SystemStateListener<5000> {
   public:
     StatusPusher(MyApp& app) : app_(app) {}
 
@@ -96,7 +96,7 @@ class StatusPusher : public ungula::ESP32SystemStateListener<5000> {
 };
 
 // In setup():
-ungula::SystemStateNotifier<4> notifier;
+ungula::eventbus::SystemStateNotifier<4> notifier;
 StatusPusher pusher(app);
 
 notifier.subscribe(&pusher);

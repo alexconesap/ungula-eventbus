@@ -17,9 +17,9 @@ defined by the toolchain.
 ### Use case: portable broker (host tests, STM32, any C++17)
 
 ```cpp
-#include <ungula_eventbus.h>
+#include <ungula/eventbus.h>
 
-class MyListener : public ungula::ISystemStateListener {
+class MyListener : public ungula::eventbus::ISystemStateListener {
   public:
     bool start() override { return true; }
     void stop() override {}
@@ -29,7 +29,7 @@ class MyListener : public ungula::ISystemStateListener {
 };
 
 int main() {
-    ungula::SystemStateNotifier<4> notifier;
+    ungula::eventbus::SystemStateNotifier<4> notifier;
     MyListener a;
     MyListener b;
 
@@ -49,16 +49,16 @@ runs on a non-FreeRTOS target, or for unit tests of the broker itself.
 
 ```cpp
 #include <Arduino.h>
-#include <ungula_eventbus.h>
+#include <ungula/eventbus.h>
 
-class StatusPusher : public ungula::ESP32SystemStateListener<5000> {
+class StatusPusher : public ungula::eventbus::ESP32SystemStateListener<5000> {
   protected:
     void handleStateChange() override {
         // runs in the listener's own task; safe to do I/O here
     }
 };
 
-ungula::SystemStateNotifier<4> notifier;
+ungula::eventbus::SystemStateNotifier<4> notifier;
 StatusPusher pusher;
 
 void setup() {
@@ -80,9 +80,9 @@ changes asynchronously without blocking the caller of `notify()`.
 ### Use case: customising the listener task
 
 ```cpp
-#include <ungula_eventbus.h>
+#include <ungula/eventbus.h>
 
-class HighPriorityPusher : public ungula::ESP32SystemStateListener<0> {
+class HighPriorityPusher : public ungula::eventbus::ESP32SystemStateListener<0> {
   protected:
     void handleStateChange() override { /* ... */ }
 
@@ -101,9 +101,9 @@ indefinitely until a notification arrives.
 
 ## Public types
 
-### `ungula::ISystemStateListener`
+### `ungula::eventbus::ISystemStateListener`
 
-Pure-abstract interface. Defined in `<brokers/i_system_state_listener.h>`.
+Pure-abstract interface. Defined in `<ungula/eventbus/i_system_state_listener.h>`.
 
 | Method | Contract |
 | --- | --- |
@@ -114,19 +114,19 @@ Pure-abstract interface. Defined in `<brokers/i_system_state_listener.h>`.
 The interface does not own any task or buffer — implementations decide.
 The destructor is virtual and `default`.
 
-### `ungula::SystemStateNotifier<size_t MaxListeners>`
+### `ungula::eventbus::SystemStateNotifier<size_t MaxListeners>`
 
 Header-only template. Fixed-capacity broadcaster. No heap. Defined in
-`<brokers/system_state_notifier.h>`.
+`<ungula/eventbus/system_state_notifier.h>`.
 
 Storage: `ISystemStateListener* listeners_[MaxListeners]`, plus a count
 and an active flag. Default-constructed; no setup needed.
 
-### `ungula::ESP32SystemStateListener<uint32_t PollIntervalMs = 5000>`
+### `ungula::eventbus::ESP32SystemStateListener<uint32_t PollIntervalMs = 5000>`
 
 Abstract base class implementing `ISystemStateListener` over a single
 FreeRTOS task using task notifications. Defined in
-`<brokers/esp32_system_state_listener.h>`. Only compiled when
+`<ungula/eventbus/esp32_system_state_listener.h>`. Only compiled when
 `ESP_PLATFORM` is defined.
 
 Template parameter `PollIntervalMs` is the maximum idle time between
@@ -317,7 +317,7 @@ inspect the booleans where they matter.
 - Do not protect the broker with locks at runtime; configure it once and
   leave the membership stable.
 - Do not call `delay()`, `millis()`, or other Arduino timing APIs inside
-  `handleStateChange()` — use `ungula::TimeControl` per project rules.
+  `handleStateChange()` — use `ungula::core::time::TimeControl` per project rules.
 - Do not add logging calls inside listener implementations placed in
   reusable libraries; the host project owns logging.
 - If a use case needs a payload, a queue, or topic routing, this library

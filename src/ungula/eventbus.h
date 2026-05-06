@@ -9,9 +9,9 @@
 // Ungula Event Brokers Library
 // Include this header to activate the library in Arduino
 
-#include "brokers/i_system_state_listener.h"
-#include "brokers/system_state_notifier.h"
+#include "ungula/eventbus/i_system_state_listener.h"
+#include "ungula/eventbus/system_state_notifier.h"
 
 #ifdef ESP_PLATFORM
-#include "brokers/esp32_system_state_listener.h"
+#include "ungula/eventbus/esp32_system_state_listener.h"
 #endif

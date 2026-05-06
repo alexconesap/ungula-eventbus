@@ -1,11 +1,11 @@
 // Unit tests for SystemStateNotifier (non-FreeRTOS, just the subscribe/broadcast logic)
 
-#include <brokers/i_system_state_listener.h>
-#include <brokers/system_state_notifier.h>
+#include <ungula/eventbus/i_system_state_listener.h>
+#include <ungula/eventbus/system_state_notifier.h>
 #include <gtest/gtest.h>
 
 // Mock listener that counts notifications
-class MockListener : public ungula::ISystemStateListener {
+class MockListener : public ungula::eventbus::ISystemStateListener {
     public:
         int notifyCount = 0;
         bool started = false;
@@ -25,14 +25,14 @@ class MockListener : public ungula::ISystemStateListener {
 // --- Subscribe / Unsubscribe ---
 
 TEST(SystemStateNotifier, SubscribeReturnsTrue) {
-    ungula::SystemStateNotifier<4> notifier;
+    ungula::eventbus::SystemStateNotifier<4> notifier;
     MockListener listener;
     EXPECT_TRUE(notifier.subscribe(&listener));
     EXPECT_EQ(notifier.listenerCount(), 1);
 }
 
 TEST(SystemStateNotifier, RejectsDuplicateSubscription) {
-    ungula::SystemStateNotifier<4> notifier;
+    ungula::eventbus::SystemStateNotifier<4> notifier;
     MockListener listener;
     EXPECT_TRUE(notifier.subscribe(&listener));
     EXPECT_FALSE(notifier.subscribe(&listener));
@@ -40,13 +40,13 @@ TEST(SystemStateNotifier, RejectsDuplicateSubscription) {
 }
 
 TEST(SystemStateNotifier, RejectsNullPointer) {
-    ungula::SystemStateNotifier<4> notifier;
+    ungula::eventbus::SystemStateNotifier<4> notifier;
     EXPECT_FALSE(notifier.subscribe(nullptr));
     EXPECT_EQ(notifier.listenerCount(), 0);
 }
 
 TEST(SystemStateNotifier, RejectsWhenFull) {
-    ungula::SystemStateNotifier<2> notifier;
+    ungula::eventbus::SystemStateNotifier<2> notifier;
     MockListener listener1, listener2, listener3;
     EXPECT_TRUE(notifier.subscribe(&listener1));
     EXPECT_TRUE(notifier.subscribe(&listener2));
@@ -54,7 +54,7 @@ TEST(SystemStateNotifier, RejectsWhenFull) {
 }
 
 TEST(SystemStateNotifier, UnsubscribeRemovesListener) {
-    ungula::SystemStateNotifier<4> notifier;
+    ungula::eventbus::SystemStateNotifier<4> notifier;
     MockListener listener;
     notifier.subscribe(&listener);
     EXPECT_TRUE(notifier.unsubscribe(&listener));
@@ -62,7 +62,7 @@ TEST(SystemStateNotifier, UnsubscribeRemovesListener) {
 }
 
 TEST(SystemStateNotifier, UnsubscribeReturnsFalseIfNotFound) {
-    ungula::SystemStateNotifier<4> notifier;
+    ungula::eventbus::SystemStateNotifier<4> notifier;
     MockListener listener;
     EXPECT_FALSE(notifier.unsubscribe(&listener));
 }
@@ -70,7 +70,7 @@ TEST(SystemStateNotifier, UnsubscribeReturnsFalseIfNotFound) {
 // --- Notify ---
 
 TEST(SystemStateNotifier, NotifyDoesNothingWhenInactive) {
-    ungula::SystemStateNotifier<4> notifier;
+    ungula::eventbus::SystemStateNotifier<4> notifier;
     MockListener listener;
     notifier.subscribe(&listener);
     notifier.notify();  // inactive by default
@@ -78,7 +78,7 @@ TEST(SystemStateNotifier, NotifyDoesNothingWhenInactive) {
 }
 
 TEST(SystemStateNotifier, NotifyBroadcastsWhenActive) {
-    ungula::SystemStateNotifier<4> notifier;
+    ungula::eventbus::SystemStateNotifier<4> notifier;
     MockListener listener;
     notifier.subscribe(&listener);
     notifier.activate();
@@ -87,7 +87,7 @@ TEST(SystemStateNotifier, NotifyBroadcastsWhenActive) {
 }
 
 TEST(SystemStateNotifier, NotifyBroadcastsToAllListeners) {
-    ungula::SystemStateNotifier<4> notifier;
+    ungula::eventbus::SystemStateNotifier<4> notifier;
     MockListener listener1, listener2, listener3;
     notifier.subscribe(&listener1);
     notifier.subscribe(&listener2);
@@ -100,7 +100,7 @@ TEST(SystemStateNotifier, NotifyBroadcastsToAllListeners) {
 }
 
 TEST(SystemStateNotifier, MultipleNotifyCalls) {
-    ungula::SystemStateNotifier<4> notifier;
+    ungula::eventbus::SystemStateNotifier<4> notifier;
     MockListener listener;
     notifier.subscribe(&listener);
     notifier.activate();
@@ -113,7 +113,7 @@ TEST(SystemStateNotifier, MultipleNotifyCalls) {
 // --- Activate / Deactivate ---
 
 TEST(SystemStateNotifier, DeactivateStopsNotifications) {
-    ungula::SystemStateNotifier<4> notifier;
+    ungula::eventbus::SystemStateNotifier<4> notifier;
     MockListener listener;
     notifier.subscribe(&listener);
     notifier.activate();
@@ -125,7 +125,7 @@ TEST(SystemStateNotifier, DeactivateStopsNotifications) {
 }
 
 TEST(SystemStateNotifier, ReactivateResumesNotifications) {
-    ungula::SystemStateNotifier<4> notifier;
+    ungula::eventbus::SystemStateNotifier<4> notifier;
     MockListener listener;
     notifier.subscribe(&listener);
     notifier.activate();
@@ -140,7 +140,7 @@ TEST(SystemStateNotifier, ReactivateResumesNotifications) {
 // --- Unsubscribe during active ---
 
 TEST(SystemStateNotifier, UnsubscribedListenerDoesNotReceive) {
-    ungula::SystemStateNotifier<4> notifier;
+    ungula::eventbus::SystemStateNotifier<4> notifier;
     MockListener listener1, listener2;
     notifier.subscribe(&listener1);
     notifier.subscribe(&listener2);
