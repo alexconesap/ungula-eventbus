@@ -317,7 +317,7 @@ inspect the booleans where they matter.
 - Do not protect the broker with locks at runtime; configure it once and
   leave the membership stable.
 - Do not call `delay()`, `millis()`, or other Arduino timing APIs inside
-  `handleStateChange()` — use `ungula::core::time::TimeControl` per project rules.
+  `handleStateChange()` — use `ungula::core::time` per project rules.
 - Do not add logging calls inside listener implementations placed in
   reusable libraries; the host project owns logging.
 - If a use case needs a payload, a queue, or topic routing, this library
