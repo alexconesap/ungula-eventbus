@@ -45,103 +45,102 @@
 
 namespace ungula::eventbus {
 
-
-template <uint32_t PollIntervalMs = 5000>
-class ESP32SystemStateListener : public ISystemStateListener {
-    public:
-        virtual ~ESP32SystemStateListener() {
-            stop();
-        }
-
-        bool start() override {
-            if (taskHandle_ != nullptr) {
-                return true;  // already running
+    template <uint32_t PollIntervalMs = 5000>
+    class ESP32SystemStateListener : public ISystemStateListener {
+        public:
+            virtual ~ESP32SystemStateListener() {
+                stop();
             }
-            running_ = true;
-            BaseType_t result =
-                    xTaskCreatePinnedToCore(taskEntry, taskName(), stackSize(), this,
-                                            taskPriority(), &taskHandle_, taskCore());
-            if (result != pdPASS) {
+
+            bool start() override {
+                if (taskHandle_ != nullptr) {
+                    return true;  // already running
+                }
+                running_ = true;
+                BaseType_t result =
+                        xTaskCreatePinnedToCore(taskEntry, taskName(), stackSize(), this,
+                                                taskPriority(), &taskHandle_, taskCore());
+                if (result != pdPASS) {
+                    running_ = false;
+                    taskHandle_ = nullptr;
+                    return false;
+                }
+                return true;
+            }
+
+            void stop() override {
+                if (taskHandle_ == nullptr) {
+                    return;
+                }
                 running_ = false;
-                taskHandle_ = nullptr;
-                return false;
+                // Wake the task so it can exit the loop
+                xTaskNotifyGive(taskHandle_);
+                // Wait for the task to finish (up to 2 seconds)
+                for (int attempt = 0; attempt < 200 && taskHandle_ != nullptr; ++attempt) {
+                    vTaskDelay(pdMS_TO_TICKS(10));
+                }
             }
-            return true;
-        }
 
-        void stop() override {
-            if (taskHandle_ == nullptr) {
-                return;
+            void notifyStateChanged() override {
+                if (!running_ || taskHandle_ == nullptr) {
+                    return;
+                }
+                // Non-blocking: xTaskNotifyGive increments a counter.
+                // The task reads it with ulTaskNotifyTake(pdTRUE, ...) which
+                // resets to 0 — so multiple rapid calls coalesce into one wakeup.
+                xTaskNotifyGive(taskHandle_);
             }
-            running_ = false;
-            // Wake the task so it can exit the loop
-            xTaskNotifyGive(taskHandle_);
-            // Wait for the task to finish (up to 2 seconds)
-            for (int attempt = 0; attempt < 200 && taskHandle_ != nullptr; ++attempt) {
-                vTaskDelay(pdMS_TO_TICKS(10));
+
+        protected:
+            /// Derived classes implement this to handle a state change.
+            /// Called in the listener's own task context — safe to do I/O, build JSON, etc.
+            virtual void handleStateChange() = 0;
+
+            /// Override these for custom task parameters
+            virtual const char* taskName() const {
+                return "state_listener";
             }
-        }
-
-        void notifyStateChanged() override {
-            if (!running_ || taskHandle_ == nullptr) {
-                return;
+            virtual uint32_t stackSize() const {
+                return CONFIG_STATE_LISTENER_STACK;
             }
-            // Non-blocking: xTaskNotifyGive increments a counter.
-            // The task reads it with ulTaskNotifyTake(pdTRUE, ...) which
-            // resets to 0 — so multiple rapid calls coalesce into one wakeup.
-            xTaskNotifyGive(taskHandle_);
-        }
+            virtual UBaseType_t taskPriority() const {
+                return CONFIG_STATE_LISTENER_PRIORITY;
+            }
+            virtual BaseType_t taskCore() const {
+                return CONFIG_STATE_LISTENER_CORE;
+            }
 
-    protected:
-        /// Derived classes implement this to handle a state change.
-        /// Called in the listener's own task context — safe to do I/O, build JSON, etc.
-        virtual void handleStateChange() = 0;
+        private:
+            TaskHandle_t taskHandle_ = nullptr;
+            volatile bool running_ = false;
 
-        /// Override these for custom task parameters
-        virtual const char* taskName() const {
-            return "state_listener";
-        }
-        virtual uint32_t stackSize() const {
-            return CONFIG_STATE_LISTENER_STACK;
-        }
-        virtual UBaseType_t taskPriority() const {
-            return CONFIG_STATE_LISTENER_PRIORITY;
-        }
-        virtual BaseType_t taskCore() const {
-            return CONFIG_STATE_LISTENER_CORE;
-        }
+            static void taskEntry(void* param) {
+                auto* self = static_cast<ESP32SystemStateListener*>(param);
+                self->taskLoop();
+            }
 
-    private:
-        TaskHandle_t taskHandle_ = nullptr;
-        volatile bool running_ = false;
+            void taskLoop() {
+                while (running_) {
+                    // Wait for notification or timeout
+                    TickType_t ticks =
+                            (PollIntervalMs > 0) ? pdMS_TO_TICKS(PollIntervalMs) : portMAX_DELAY;
 
-        static void taskEntry(void* param) {
-            auto* self = static_cast<ESP32SystemStateListener*>(param);
-            self->taskLoop();
-        }
+                    // ulTaskNotifyTake with pdTRUE resets the counter to 0,
+                    // so N rapid notifications become one wakeup.
+                    ulTaskNotifyTake(pdTRUE, ticks);
 
-        void taskLoop() {
-            while (running_) {
-                // Wait for notification or timeout
-                TickType_t ticks =
-                        (PollIntervalMs > 0) ? pdMS_TO_TICKS(PollIntervalMs) : portMAX_DELAY;
+                    if (!running_) {
+                        break;
+                    }
 
-                // ulTaskNotifyTake with pdTRUE resets the counter to 0,
-                // so N rapid notifications become one wakeup.
-                ulTaskNotifyTake(pdTRUE, ticks);
-
-                if (!running_) {
-                    break;
+                    handleStateChange();
                 }
 
-                handleStateChange();
+                // Clean exit
+                taskHandle_ = nullptr;
+                vTaskDelete(nullptr);
             }
-
-            // Clean exit
-            taskHandle_ = nullptr;
-            vTaskDelete(nullptr);
-        }
-};
+    };
 
 }  // namespace ungula::eventbus
 #endif  // ESP_PLATFORM

@@ -1,8 +1,8 @@
 // Unit tests for SystemStateNotifier (non-FreeRTOS, just the subscribe/broadcast logic)
 
+#include <gtest/gtest.h>
 #include <ungula/eventbus/i_system_state_listener.h>
 #include <ungula/eventbus/system_state_notifier.h>
-#include <gtest/gtest.h>
 
 // Mock listener that counts notifications
 class MockListener : public ungula::eventbus::ISystemStateListener {
