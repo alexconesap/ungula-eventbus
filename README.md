@@ -17,6 +17,8 @@ The notifier is non-blocking. The listeners do all their work asynchronously. Mu
 Pure abstract interface. Three methods:
 
 ```cpp
+#include <ungula/eventbus.h>
+
 class ISystemStateListener {
     virtual bool start() = 0;            // create task, begin processing
     virtual void stop() = 0;             // request task exit
@@ -29,6 +31,8 @@ class ISystemStateListener {
 Fixed-capacity broadcaster. Stores listener pointers, no dynamic allocation. Starts inactive — notifications are silently dropped until `activate()` is called (so the system can finish initialization first).
 
 ```cpp
+#include <ungula/eventbus.h>
+
 ungula::eventbus::SystemStateNotifier<4> notifier;
 
 notifier.subscribe(&wsListener);
@@ -42,6 +46,8 @@ notifier.notify();      // broadcast to all listeners
 Abstract base class implementing `ISystemStateListener` using FreeRTOS task notifications. Template Method pattern — the base class owns the task loop, the derived class implements `handleStateChange()`.
 
 ```cpp
+#include <ungula/eventbus.h>
+
 class MyListener : public ungula::eventbus::ESP32SystemStateListener<5000> {
   protected:
     void handleStateChange() override {
