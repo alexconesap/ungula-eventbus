@@ -3,7 +3,8 @@
 
 #pragma once
 
-namespace ungula::eventbus {
+namespace ungula::eventbus
+{
 
     /// Pure interface for system-state-change listeners.
     ///
@@ -12,19 +13,19 @@ namespace ungula::eventbus {
     /// The listener knows nothing about what changed — it queries the
     /// host system for the current state when it wakes up.
     class ISystemStateListener {
-        public:
-            virtual ~ISystemStateListener() = default;
+    public:
+        virtual ~ISystemStateListener() = default;
 
-            /// Start the listener (create task, begin processing)
-            virtual bool start() = 0;
+        /// Start the listener (create task, begin processing)
+        virtual bool start() = 0;
 
-            /// Stop the listener (request task exit, clean up)
-            virtual void stop() = 0;
+        /// Stop the listener (request task exit, clean up)
+        virtual void stop() = 0;
 
-            /// Signal that the system state has changed.
-            /// Must be non-blocking. May be called from ISR context or main loop.
-            /// Multiple rapid calls coalesce into a single pending notification.
-            virtual void notifyStateChanged() = 0;
+        /// Signal that the system state has changed.
+        /// Must be non-blocking. May be called from ISR context or main loop.
+        /// Multiple rapid calls coalesce into a single pending notification.
+        virtual void notifyStateChanged() = 0;
     };
 
-}  // namespace ungula::eventbus
+} // namespace ungula::eventbus
