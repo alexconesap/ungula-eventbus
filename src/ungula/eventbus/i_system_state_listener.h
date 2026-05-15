@@ -6,13 +6,13 @@
 namespace ungula::eventbus
 {
 
-    /// Pure interface for system-state-change listeners.
-    ///
-    /// Implementations receive a "something changed" signal and decide
-    /// what to do in their own context (typically a FreeRTOS task).
-    /// The listener knows nothing about what changed — it queries the
-    /// host system for the current state when it wakes up.
-    class ISystemStateListener {
+/// Pure interface for system-state-change listeners.
+///
+/// Implementations receive a "something changed" signal and decide
+/// what to do in their own context (typically a FreeRTOS task).
+/// The listener knows nothing about what changed — it queries the
+/// host system for the current state when it wakes up.
+class ISystemStateListener {
     public:
         virtual ~ISystemStateListener() = default;
 
@@ -26,6 +26,6 @@ namespace ungula::eventbus
         /// Must be non-blocking. May be called from ISR context or main loop.
         /// Multiple rapid calls coalesce into a single pending notification.
         virtual void notifyStateChanged() = 0;
-    };
+};
 
 } // namespace ungula::eventbus

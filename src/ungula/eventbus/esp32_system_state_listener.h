@@ -46,52 +46,54 @@
 namespace ungula::eventbus
 {
 
-    template <uint32_t PollIntervalMs = 5000> class ESP32SystemStateListener : public ISystemStateListener {
+template <uint32_t PollIntervalMs = 5000>
+class ESP32SystemStateListener : public ISystemStateListener {
     public:
         virtual ~ESP32SystemStateListener()
         {
-            stop();
+                stop();
         }
 
         bool start() override
         {
-            if (taskHandle_ != nullptr) {
-                return true; // already running
-            }
-            running_ = true;
-            BaseType_t result = xTaskCreatePinnedToCore(taskEntry, taskName(), stackSize(), this, taskPriority(),
-                                                        &taskHandle_, taskCore());
-            if (result != pdPASS) {
-                running_ = false;
-                taskHandle_ = nullptr;
-                return false;
-            }
-            return true;
+                if (taskHandle_ != nullptr) {
+                        return true; // already running
+                }
+                running_ = true;
+                BaseType_t result = xTaskCreatePinnedToCore(taskEntry, taskName(), stackSize(),
+                                                            this, taskPriority(), &taskHandle_,
+                                                            taskCore());
+                if (result != pdPASS) {
+                        running_ = false;
+                        taskHandle_ = nullptr;
+                        return false;
+                }
+                return true;
         }
 
         void stop() override
         {
-            if (taskHandle_ == nullptr) {
-                return;
-            }
-            running_ = false;
-            // Wake the task so it can exit the loop
-            xTaskNotifyGive(taskHandle_);
-            // Wait for the task to finish (up to 2 seconds)
-            for (int attempt = 0; attempt < 200 && taskHandle_ != nullptr; ++attempt) {
-                vTaskDelay(pdMS_TO_TICKS(10));
-            }
+                if (taskHandle_ == nullptr) {
+                        return;
+                }
+                running_ = false;
+                // Wake the task so it can exit the loop
+                xTaskNotifyGive(taskHandle_);
+                // Wait for the task to finish (up to 2 seconds)
+                for (int attempt = 0; attempt < 200 && taskHandle_ != nullptr; ++attempt) {
+                        vTaskDelay(pdMS_TO_TICKS(10));
+                }
         }
 
         void notifyStateChanged() override
         {
-            if (!running_ || taskHandle_ == nullptr) {
-                return;
-            }
-            // Non-blocking: xTaskNotifyGive increments a counter.
-            // The task reads it with ulTaskNotifyTake(pdTRUE, ...) which
-            // resets to 0 — so multiple rapid calls coalesce into one wakeup.
-            xTaskNotifyGive(taskHandle_);
+                if (!running_ || taskHandle_ == nullptr) {
+                        return;
+                }
+                // Non-blocking: xTaskNotifyGive increments a counter.
+                // The task reads it with ulTaskNotifyTake(pdTRUE, ...) which
+                // resets to 0 — so multiple rapid calls coalesce into one wakeup.
+                xTaskNotifyGive(taskHandle_);
         }
 
     protected:
@@ -102,19 +104,19 @@ namespace ungula::eventbus
         /// Override these for custom task parameters
         virtual const char *taskName() const
         {
-            return "state_listener";
+                return "state_listener";
         }
         virtual uint32_t stackSize() const
         {
-            return CONFIG_STATE_LISTENER_STACK;
+                return CONFIG_STATE_LISTENER_STACK;
         }
         virtual UBaseType_t taskPriority() const
         {
-            return CONFIG_STATE_LISTENER_PRIORITY;
+                return CONFIG_STATE_LISTENER_PRIORITY;
         }
         virtual BaseType_t taskCore() const
         {
-            return CONFIG_STATE_LISTENER_CORE;
+                return CONFIG_STATE_LISTENER_CORE;
         }
 
     private:
@@ -123,32 +125,33 @@ namespace ungula::eventbus
 
         static void taskEntry(void *param)
         {
-            auto *self = static_cast<ESP32SystemStateListener *>(param);
-            self->taskLoop();
+                auto *self = static_cast<ESP32SystemStateListener *>(param);
+                self->taskLoop();
         }
 
         void taskLoop()
         {
-            while (running_) {
-                // Wait for notification or timeout
-                TickType_t ticks = (PollIntervalMs > 0) ? pdMS_TO_TICKS(PollIntervalMs) : portMAX_DELAY;
+                while (running_) {
+                        // Wait for notification or timeout
+                        TickType_t ticks = (PollIntervalMs > 0) ? pdMS_TO_TICKS(PollIntervalMs) :
+                                                                  portMAX_DELAY;
 
-                // ulTaskNotifyTake with pdTRUE resets the counter to 0,
-                // so N rapid notifications become one wakeup.
-                ulTaskNotifyTake(pdTRUE, ticks);
+                        // ulTaskNotifyTake with pdTRUE resets the counter to 0,
+                        // so N rapid notifications become one wakeup.
+                        ulTaskNotifyTake(pdTRUE, ticks);
 
-                if (!running_) {
-                    break;
+                        if (!running_) {
+                                break;
+                        }
+
+                        handleStateChange();
                 }
 
-                handleStateChange();
-            }
-
-            // Clean exit
-            taskHandle_ = nullptr;
-            vTaskDelete(nullptr);
+                // Clean exit
+                taskHandle_ = nullptr;
+                vTaskDelete(nullptr);
         }
-    };
+};
 
 } // namespace ungula::eventbus
 #endif // ESP_PLATFORM
