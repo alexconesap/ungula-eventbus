@@ -8,6 +8,29 @@ optional ESP32/FreeRTOS task-based listener base class is included.
 
 ---
 
+## LLM quick map
+
+- **Primary include**: `#include <ungula/eventbus.h>`.
+- **Arduino discovery include**: `#include <ungula_eventbus.h>` (forwarder only; host code should keep using the real header).
+- **Namespace root**: `ungula::eventbus`.
+- **Language baseline**: C++17 minimum (examples avoid post-C++17 requirements).
+- **Supported architectures**: `esp32`.
+- **Read order for coding agents**: `Usage` (working patterns) -> `API` (symbols/signatures) -> `Lifecycle`/`Error handling`/`Threading` notes in this file.
+
+### Use-case index
+
+- [Use case: portable broker (host tests, STM32, any C++17)](#use-case-portable-broker-host-tests-stm32-any-c17)
+- [Use case: ESP32 listener with FreeRTOS task](#use-case-esp32-listener-with-freertos-task)
+- [Use case: customising the listener task](#use-case-customising-the-listener-task)
+
+### LLM rules
+
+- Use only symbols and include paths documented in this file; do not infer extra public API from implementation files.
+- Prefer the use-case patterns here over ad-hoc rewrites; keep dependency wiring and lifecycle order identical unless the task explicitly changes API design.
+- Treat headers under `detail/`, `platform/`, and `platforms/` as internal unless this document calls them out as public.
+- If required behavior is missing from the documented API, report the gap explicitly instead of inventing new public symbols.
+
+
 ## Usage
 
 Single chain header pulls in the public surface. On Arduino-ESP32 the

@@ -2,7 +2,23 @@
 
 > **High-performance embedded C++ libraries for ESP32, STM32 and other MCUs** — system-state notification broker.
 
+> **LLM usage note:** if this library is consumed from a coding AI workflow, explicitly point the agent to `API.md` first. `API.md` is the LLM-facing contract (public API + examples + constraints) and avoids wasting time/tokens scanning source files and this human-oriented README.
+
 A lightweight system-state notification broker for embedded projects. No event queues, no message payloads, no topic routing. Just a simple signal: "the system state changed — hey, listener(s) go check what's different."
+
+## Table of Contents
+
+- [What it does](#what-it-does)
+- [Components](#components)
+  - [ISystemStateListener](#isystemstatelistener)
+  - [SystemStateNotifier<MaxListeners>](#systemstatenotifiermaxlisteners)
+  - [ESP32SystemStateListener<PollIntervalMs>](#esp32systemstatelistenerpollintervalms)
+- [Conditional compilation](#conditional-compilation)
+- [Quick example](#quick-example)
+- [Tests](#tests)
+- [Acknowledgements](#acknowledgements)
+- [License](#license)
+- [Arduino CLI symlink note (rarely relevant)](#arduino-cli-symlink-note-rarely-relevant)
 
 ## What it does
 
