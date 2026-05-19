@@ -4,10 +4,13 @@
 
 > **LLM usage note:** if this library is consumed from a coding AI workflow, explicitly point the agent to `API.md` first. `API.md` is the LLM-facing contract (public API + examples + constraints) and avoids wasting time/tokens scanning source files and this human-oriented README.
 
+> **Warning - Active Development:** This library is under active architecture work to support multiple projects in parallel. Its structure is not finalized yet and may change without notice while this work is in progress. Updates are currently frequent (often daily). Target for structural freeze and stable `v1.0.0`: **June 2026**.
+
 A lightweight system-state notification broker for embedded projects. No event queues, no message payloads, no topic routing. Just a simple signal: "the system state changed — hey, listener(s) go check what's different."
 
 ## Table of Contents
 
+- [C++ Compatibility](#c-compatibility)
 - [What it does](#what-it-does)
 - [Components](#components)
   - [ISystemStateListener](#isystemstatelistener)
@@ -19,6 +22,12 @@ A lightweight system-state notification broker for embedded projects. No event q
 - [Acknowledgements](#acknowledgements)
 - [License](#license)
 - [Arduino CLI symlink note (rarely relevant)](#arduino-cli-symlink-note-rarely-relevant)
+
+## C++ Compatibility
+
+- **Own source minimum**: `C++17`.
+- **Effective minimum for consumers**: `C++17`.
+- **Dependency impact**: None (no declared internal dependencies).
 
 ## What it does
 
